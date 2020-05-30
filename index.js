@@ -18,25 +18,35 @@ function escapeToUnicode() {
     result.textContent = 'クリップボードにコピーされました';
     result.className = '';
 
-    // バイト数チェック
-    // HTMLエスケープされてからチェックにかけられることに留意
+    // 行数ごとのバイト数チェック
+    // （出力ではされなくとも）HTMLエスケープされてからチェックにかけられる
+    // UTF-8ではなくShift_JISでカウントされる
     let overflowedRow;
     let overflowedBytes = 0;
-    output.replace(/&/g, '&amp;')
-                               .replace(/"/g, '&quot;')
-                               .replace(/</g, '&lt;')
-                               .replace(/>/g, '&gt;')
-                               .split('\n')
-                               .some((s, i) => {
-        const bytes = encodeURIComponent(s).replace(/%../g,"x").length;
-        if (bytes > 256) {
-            overflowedRow = i + 1;
-            overflowBytes = bytes - 256;
-            return true;
-        } else {
-            return false;
-        }
-    });
+    output
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .split('\n')
+        .some((s, i) => {
+            let bytes = 0;
+            for (let c of s) {
+                let code = c.charCodeAt();
+                if ((code >= 0x0 && code < 0x81) || (code >= 0xff61 && code < 0xffa0) || (code >= 0xf8f0 && code < 0xf8f4)) {
+                    bytes += 1;
+                } else {
+                    bytes += 2;
+                }
+            }
+            if (bytes >= 256) {
+                overflowedRow = i + 1;
+                overflowBytes = bytes - 255;
+                return true;
+            } else {
+                return false;
+            }
+        });
     if (overflowedRow) {
         result.textContent = `${overflowedRow}行目が${overflowBytes}バイト超過 連続するスペースや半角記号を減らしてください`;
         result.className = 'error';
