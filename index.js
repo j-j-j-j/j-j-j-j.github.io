@@ -5,7 +5,7 @@ function escapeToUnicode() {
                       .replace(/[　 ]{5,}/g, avoid)
                       .replace(/[ \.,'"\:;\-=_|＼／]{5,}/g, avoid)
                       .replace(/ <br> /g, '\n')
-                      .replace(/&#32;<br> /g, '&#10;');
+                      .replace(/(.)&#32;<br> /g, (_, c) => toEntity(c) + '\n');
 
     const tempElement = document.createElement('textarea');
     tempElement.style = "position: absolute; left: -9999px; top: -9999px";
@@ -54,10 +54,13 @@ function escapeToUnicode() {
     }
 
     function avoid(s) {
-        return s.replace(/(?:^.|[^ \.\:;,'"=_|])?.{4}/g, (substr) => {
-            return substr.slice(0, -1) + '&#' + substr.slice(-1).charCodeAt() + ';';
+        return s.replace(/(?:^.|[^ \.,'"\:;\-=_|＼／])?.{4}/g, (substr) => {
+            return substr.slice(0, -1) + toEntity(substr.slice(-1));
         });
     }
 
+    function toEntity(c) {
+        return '&#' + c.charCodeAt() + ';';
+    }
 }
 
