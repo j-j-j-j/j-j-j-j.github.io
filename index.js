@@ -3,8 +3,9 @@ function escapeToUnicode() {
     // NGワード判定は改行を' <br> 'に置換してから行っている
     let output = input.replace(/\n/g, ' <br> ')
                       .replace(/[　 ]{5,}/g, avoid)
-                      .replace(/[ \.,'"\:;=_|]{5,}/g, avoid)
-                      .replace(/( |&#32;)<br> /g, '\n');
+                      .replace(/[ \.,'"\:;\-=_|]{5,}/g, avoid)
+                      .replace(/ <br> /g, '\n')
+                      .replace(/&#32;<br> /g, '&#10;');
 
     const tempElement = document.createElement('textarea');
     tempElement.style = "position: absolute; left: -9999px; top: -9999px";
