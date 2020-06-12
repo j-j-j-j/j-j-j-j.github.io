@@ -1,4 +1,4 @@
-let CHARS = ' .,\'"\\:;\\-=_|＼／';
+let CHARS = ' .,\'"\\:;\\-=_|＼／<>';
 
 function escapeToUnicode() {
     let s = document.getElementById('input').value;
