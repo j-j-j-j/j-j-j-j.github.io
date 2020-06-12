@@ -53,14 +53,7 @@ function clipboard(s) {
 
 function checkByteCount(s) {
     // バイト数チェック
-    // （出力ではされなくとも）HTMLエスケープされてからチェックにかけられる
     // UTF-8ではなくShift_JISでカウントされる
-
-    s = s
-        .replace(/&/g, '&amp;')
-        .replace(/"/g, '&quot;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
 
     const bytes = countBytes(s);
     if (bytes > 4096) {
@@ -69,11 +62,12 @@ function checkByteCount(s) {
     }
 
     s
+        .replace('\n', ' <br> \n')
         .split('\n')
         .some((s, i) => {
             const bytesOfRow = countBytes(s)
-            if (bytesOfRow >= 256) {
-                result.textContent = `${i + 1}行目が${bytesOfRow - 255}バイト超過 連続するスペースや記号を減らしてください`;
+            if (bytesOfRow > 1024) {
+                result.textContent = `${i + 1}行目が${bytesOfRow - 1024}バイト超過 連続するスペースや記号を減らしてください`;
                 result.className = 'error';
 
                 return true;
