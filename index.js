@@ -1,15 +1,23 @@
+let CHARS = ' .,\'"\\:;\\-=_|＼／';
+
 function escapeToUnicode() {
-    const input = document.getElementById('input').value;
-    // NGワード判定は改行を' <br> 'に置換してから行っている
-    let output = input.replace(/\n/g, ' <br> ')
-                      .replace(/[　 ]{5,}/g, avoid)
-                      .replace(/[ \.,'"\:;\-=_|＼／]{5,}/g, avoid)
-                      .replace(/ <br> /g, '\n')
-                      .replace(/(.)&#32;<br> /g, (_, c) => toEntity(c) + '\n');
+    let s = document.getElementById('input').value;
+
+    let r = /[　 \n][　 ]{3}[　 \n]/;
+    while (r.test(s)) {
+        s = avoid(s, r);
+    }
+
+    r = RegExp(`[${CHARS}\n][${CHARS}]{3}[${CHARS}\n]`);
+    while (r.test(s)) {
+        s = avoid(s, r);
+    }
+
+    console.log(s)
 
     const tempElement = document.createElement('textarea');
     tempElement.style = "position: absolute; left: -9999px; top: -9999px";
-    tempElement.value = output;
+    tempElement.value = s;
     document.body.appendChild(tempElement);
     tempElement.select();
     document.execCommand('copy');
@@ -24,7 +32,8 @@ function escapeToUnicode() {
     // UTF-8ではなくShift_JISでカウントされる
     let overflowedRow;
     let overflowedBytes = 0;
-    output
+
+    s
         .replace(/&/g, '&amp;')
         .replace(/"/g, '&quot;')
         .replace(/</g, '&lt;')
@@ -53,9 +62,15 @@ function escapeToUnicode() {
         result.className = 'error';
     }
 
-    function avoid(s) {
-        return s.replace(/(?:^.|[^ \.,'"\:;\-=_|＼／])?.{4}/g, (substr) => {
-            return substr.slice(0, -1) + toEntity(substr.slice(-1));
+    function avoid(s, r) {
+        return s.replace(r, (sub) => {
+            // 最後の1文字を数値参照化
+            // 最後の1文字が改行の場合は最後から2文字目を数値参照化する
+            if (sub.slice(-1) === '\n') {
+                return sub.slice(0, -2) + toEntity(sub.slice(-2, -1)) + '\n';
+            } else {
+                return sub.slice(0, -1) + toEntity(sub.slice(-1));
+            }
         });
     }
 
