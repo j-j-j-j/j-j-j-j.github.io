@@ -2,12 +2,12 @@ let CHARS = ' .,\'"\\:;\\-=_|＼／<>';
 
 function main() {
     let s = document.getElementById('input').value;
-    escapeToUnicode(s);
+    s = escapeToUnicode(s);
     clipboard(s);
     checkByteCount(s);
 }
 
-function escapeToUnicode() {
+function escapeToUnicode(s) {
     let r = /[　 \n][　 ]{3}[　 \n]/;
     while (r.test(s)) {
         s = avoid(s, r);
@@ -18,7 +18,7 @@ function escapeToUnicode() {
         s = avoid(s, r);
     }
 
-    console.log(s)
+    return s;
 
     function avoid(s, r) {
         return s.replace(r, (sub) => {
@@ -56,27 +56,24 @@ function checkByteCount(s) {
     // （出力ではされなくとも）HTMLエスケープされてからチェックにかけられる
     // UTF-8ではなくShift_JISでカウントされる
 
-    s
+    s = s
         .replace(/&/g, '&amp;')
         .replace(/"/g, '&quot;')
         .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
+        .replace(/>/g, '&gt;');
+
+    const bytes = countBytes(s);
+    if (bytes > 4096) {
+        result.textContent = `総バイト数が${bytes - 4096}バイト超過 連続するスペースや記号を減らしてください`;
+        result.className = 'error';
+    }
+
+    s
         .split('\n')
         .some((s, i) => {
-            let bytes = 0;
-            for (let c of s) {
-                let code = c.charCodeAt();
-                if ((code >= 0x0 && code < 0x81) || (code >= 0xff61 && code < 0xffa0) || (code >= 0xf8f0 && code < 0xf8f4)) {
-                    bytes += 1;
-                } else {
-                    bytes += 2;
-                }
-            }
-            if (bytes >= 256) {
-                const overflowedRowNum = i + 1;
-                const overflowBytes = bytes - 255;
-
-                result.textContent = `${overflowedRowNum}行目が${overflowBytes}バイト超過 連続するスペースや半角記号を減らしてください`;
+            const bytesOfRow = countBytes(s)
+            if (bytesOfRow >= 256) {
+                result.textContent = `${i + 1}行目が${bytesOfRow - 255}バイト超過 連続するスペースや記号を減らしてください`;
                 result.className = 'error';
 
                 return true;
@@ -84,4 +81,18 @@ function checkByteCount(s) {
                 return false;
             }
         });
+
+    function countBytes(s) {
+        let bytes = 0;
+        for (let c of s) {
+            let code = c.charCodeAt();
+            if ((code >= 0x0 && code < 0x81) || (code >= 0xff61 && code < 0xffa0) || (code >= 0xf8f0 && code < 0xf8f4)) {
+                bytes += 1;
+            } else {
+                bytes += 2;
+            }
+        }
+
+        return bytes;
+    }
 }
